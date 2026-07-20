@@ -1019,7 +1019,6 @@ public class TokenExchangeGrantHandler extends AbstractAuthorizationGrantHandler
             throws IdentityOAuth2Exception {
 
         IdentityProvider identityProvider;
-        boolean audienceFound;
 
         String jwtIssuer = claimsSet.getIssuer();
         String subject = resolveSubject(claimsSet);
@@ -1076,10 +1075,14 @@ public class TokenExchangeGrantHandler extends AbstractAuthorizationGrantHandler
         checkJWTValidity(claimsSet);
 
         RequestParameter[] params = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getRequestParameters();
-        audienceFound = validateAudience(audiences, identityProvider, requestedAudience, params, tenantDomain);
-        if (!audienceFound) {
-            TokenExchangeUtils.handleClientException(Constants.TokenExchangeConstants.INVALID_TARGET,
-                    "Invalid audience values provided");
+        // Skip the issuer-in-audience check for locally issued tokens; the local issuer is already trusted.
+        if (!isLocalIdentityProvider) {
+            boolean audienceFound = validateAudience(audiences, identityProvider, requestedAudience, params,
+                    tenantDomain);
+            if (!audienceFound) {
+                TokenExchangeUtils.handleClientException(Constants.TokenExchangeConstants.INVALID_TARGET,
+                        "Invalid audience values provided");
+            }
         }
 
         try {

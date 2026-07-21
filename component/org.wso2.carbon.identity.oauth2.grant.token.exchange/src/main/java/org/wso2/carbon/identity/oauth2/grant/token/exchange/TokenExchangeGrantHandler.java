@@ -434,6 +434,27 @@ public class TokenExchangeGrantHandler extends AbstractAuthorizationGrantHandler
         return commonScopes.toArray(new String[0]);
     }
 
+    /**
+     * Resolves the scopes for the issued token and sets them on the request context. For local IdP subject
+     * tokens, limits the scopes to the intersection of the requested and subject token scopes on delegation requests
+     * or when the "LimitScopesToSubjectToken" configuration is enabled.
+     *
+     * @param tokReqMsgCtx            Token request message context.
+     * @param claimsSet               Subject token claims.
+     * @param isLocalIdentityProvider Whether the subject token was issued by the local (resident) IdP.
+     */
+    private void handleRequestedScopes(OAuthTokenReqMessageContext tokReqMsgCtx, JWTClaimsSet claimsSet,
+                                       boolean isLocalIdentityProvider) {
+
+        boolean scopeLimitingAllowed = tokReqMsgCtx.isDelegationRequest()
+                || TokenExchangeUtils.isLimitScopesToSubjectTokenEnabled();
+
+        if (scopeLimitingAllowed && isLocalIdentityProvider) {
+            tokReqMsgCtx.setScope(getScopes(claimsSet, tokReqMsgCtx));
+        } else {
+            tokReqMsgCtx.setScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
+        }
+    }
 
     private String resolveImpersonator(JWTClaimsSet claimsSet) {
 
@@ -1110,7 +1131,7 @@ public class TokenExchangeGrantHandler extends AbstractAuthorizationGrantHandler
             log.debug("Subject(sub) found in JWT: " + subject + " and set as the Authorized User.");
         }
 
-        tokReqMsgCtx.setScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
+        handleRequestedScopes(tokReqMsgCtx, claimsSet, isLocalIdentityProvider);
         enrichCustomClaims(customClaims, identityProvider, params);
         log.debug("Subject JWT Token was validated successfully");
         if (OAuth2Util.isOIDCAuthzRequest(tokReqMsgCtx.getScope())) {

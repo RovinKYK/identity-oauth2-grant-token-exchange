@@ -188,6 +188,8 @@ public class TokenExchangeGrantHandlerTest {
         return new Object[][]{
                 {"https://api.example.com https://api2.example.com"},
                 {"https://not-allowed.example.com"},
+                {""},
+                {"   "},
         };
     }
 

@@ -414,10 +414,14 @@ public class TokenExchangeGrantHandler extends AbstractAuthorizationGrantHandler
     private void handleRequestedScopes(OAuthTokenReqMessageContext tokReqMsgCtx, JWTClaimsSet claimsSet,
                                        boolean isLocalIdentityProvider) {
 
-        boolean scopeLimitingAllowed = tokReqMsgCtx.isDelegationRequest()
+        RequestParameter[] params = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getRequestParameters();
+        Map<String, String> requestParams = Arrays.stream(params).collect(Collectors.toMap(RequestParameter::getKey,
+                requestParam -> requestParam.getValue()[0]));
+
+        boolean enableScopeLimiting = hasSubjectAndActorTokenParameters(requestParams)
                 || TokenExchangeUtils.isLimitScopesToSubjectTokenEnabled();
 
-        if (scopeLimitingAllowed && isLocalIdentityProvider) {
+        if (enableScopeLimiting && isLocalIdentityProvider) {
             tokReqMsgCtx.setScope(getScopes(claimsSet, tokReqMsgCtx));
         } else {
             tokReqMsgCtx.setScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());

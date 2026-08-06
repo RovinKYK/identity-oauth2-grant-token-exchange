@@ -418,13 +418,14 @@ public class TokenExchangeGrantHandler extends AbstractAuthorizationGrantHandler
         Map<String, String> requestParams = Arrays.stream(params).collect(Collectors.toMap(RequestParameter::getKey,
                 requestParam -> requestParam.getValue()[0]));
 
+        String[] requestedScopes = tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope();
         boolean enableScopeLimiting = hasSubjectAndActorTokenParameters(requestParams)
                 || TokenExchangeUtils.isLimitScopesToSubjectTokenEnabled();
 
-        if (enableScopeLimiting && isLocalIdentityProvider) {
+        if (enableScopeLimiting && isLocalIdentityProvider && ArrayUtils.isNotEmpty(requestedScopes)) {
             tokReqMsgCtx.setScope(getScopes(claimsSet, tokReqMsgCtx));
         } else {
-            tokReqMsgCtx.setScope(tokReqMsgCtx.getOauth2AccessTokenReqDTO().getScope());
+            tokReqMsgCtx.setScope(requestedScopes);
         }
     }
 

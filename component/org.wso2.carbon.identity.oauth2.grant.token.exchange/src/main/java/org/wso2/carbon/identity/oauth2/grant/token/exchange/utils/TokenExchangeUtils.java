@@ -1335,6 +1335,19 @@ public class TokenExchangeUtils {
     }
 
     /**
+     * Check whether limit scopes to subject token is enabled.
+     * This method is deprecated as it does not consider the tenant level compatibility setting.
+     * Use {@link #isLimitScopesToSubjectTokenEnabled(String)} instead.
+     *
+     * @return true if scope limiting is enabled, false otherwise.
+     */
+    @Deprecated
+    public static boolean isLimitScopesToSubjectTokenEnabled() {
+
+        return Boolean.parseBoolean(IdentityUtil.getProperty(Constants.LIMIT_SCOPES_TO_SUBJECT_TOKEN));
+    }
+
+    /**
      * Check whether limit scopes to subject token is enabled for the given tenant.
      *
      * @param tenantDomain Tenant domain of the token request.
